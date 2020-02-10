@@ -33,6 +33,7 @@ namespace Travelers
             int cj = map.MapHeight / 2;
             Vector2 center = new Vector2(ci, cj);
 
+            List<Vector2> used = new List<Vector2>();
             List<Vector2> next = new List<Vector2>();
 
             for(int i = 0; i < 4; i++)
@@ -42,12 +43,15 @@ namespace Travelers
 
                 foreach (var n in map.EmptyNeighbors(di, dj))
                 {
-                    var chanceToFail = HexMap.Distance(n, center) * 3;
-                    Console.WriteLine(chanceToFail);
-                    map.Put(n, "town");
+                    var chanceToFail = HexMap.Distance(n, center) * 4;
+
+                    if (r.Next(0, 100) > 20)
+                        map.Put(n, "town");
+                    else
+                        next.Add(n);
 
                     if (r.Next(0, 100) > chanceToFail)
-                        next.Add(n);
+                        next.AddRange(map.EmptyNeighbors(n));
                 }
 
                 map.Put(di, dj, "city");
@@ -60,19 +64,46 @@ namespace Travelers
             while(nextUp.Count > 0)
             {
                 Vector2 f = nextUp.Dequeue();
+                if (map.fields[(int)f.X, (int)f.Y].biome != null) continue;
+
                 var bs = map.BiomesInNeighbors(f);
                 var viable = bs[r.Next(0, bs.Count)];
+                var v = map.RandomBiomeAround(viable);
+                map.Put(f, v);
+                used.Add(f);
 
-                map.Put(f, map.RandomBiomeAround(viable));
-
-                foreach (var n in map.EmptyNeighbors(f))
-                {
-                    var chanceToFail = HexMap.Distance(n, center) * 3;
-                    Console.WriteLine(chanceToFail);
-                    map.Put(n, "town");
-
+                var neighbors = map.EmptyNeighbors(f);
+                foreach (var n in neighbors)
+                {                    
+                    var chanceToFail = HexMap.Distance(n, center) * 8;
                     if (r.Next(0, 100) > chanceToFail)
-                        next.Add(n);
+                    {
+                        nextUp.Enqueue(n);
+                    }
+                }
+            }
+
+            foreach (var field in used)
+            {
+                var mf = map.fields[(int)field.X, (int)field.Y];
+                if (mf.biome == "water" && 
+                    map.BiomesInNeighbors(field).Contains("valley"))
+                {
+                    if(r.Next(0, 100) > 50)
+                        map.Put(field, "moors");
+                }
+            }
+
+            foreach (var field in used)
+            {
+                foreach (var n in map.Neighbors(field))
+                {
+                    if (map.fields[(int)n.X, (int)n.Y].biome == null)
+                    {
+                        var prob = r.Next(0, 10);
+                        if (prob < 5) map.Put(n, "water");
+                        else if (prob < 2) map.Put(n, "ocean");
+                    }
                 }
             }
         }

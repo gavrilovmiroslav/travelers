@@ -14,6 +14,8 @@ namespace Travelers
         public string biome;
         public string family;
         public Texture2D texture;
+        public int tick;
+        public int timer;
     }
 
     public struct Tile
@@ -58,6 +60,7 @@ namespace Travelers
 
         public string RandomBiomeAround(string b)
         {
+            if (b == null) b = "town";
             List<string> choice = new List<string>();
             if (!biomeTies.ContainsKey(b)) return b;
             foreach(var v in biomeTies[b])
@@ -107,6 +110,7 @@ namespace Travelers
 
         public void Load(ContentManager Content)
         {
+            Random r = new Random();
             Dictionary<string, PaintedTile[]> biomes = new Dictionary<string, PaintedTile[]>();
             foreach (var tile in TilePerBiome)
             {
@@ -118,6 +122,12 @@ namespace Travelers
                         biome = tile.Value.biome,
                         family = tile.Key
                     };
+
+                    if(tile.Value.biome == "water" || tile.Value.biome == "ocean")
+                    {
+                        textures[i].tick = r.Next(60, 120);
+                        textures[i].timer = 0;
+                    }
                 }
                 biomes.Add(tile.Key, textures);
             }
@@ -132,12 +142,26 @@ namespace Travelers
                 {
                     PaintedTile tex = fields[i, j];
                     if (fields[i, j] == null) tex = textures["_"][0];
+
+                    if (tex.biome == "water" || tex.biome == "ocean")
+                    {
+                        tex.timer++;
+                        if(tex.timer > tex.tick)
+                        {
+                            tex.timer = 0;
+                            tex.tick = r.Next(60, 120);
+                            Put(i, j, tex.biome);
+                        }
+                    }
+
                     if (j % 2 == 0)
                         spriteBatch.Draw(tex.texture, new Vector2(i * TileWidth, j * TileHeight), Color.White);
                     else
                         spriteBatch.Draw(tex.texture, new Vector2(TileX + i * TileWidth, TileY + j * TileHeight), Color.White);
                 }
         }
+
+        public List<Vector2> Neighbors(Vector2 f) => Neighbors((int)f.X, (int)f.Y);
 
         public List<Vector2> Neighbors(int i, int j)
         {
@@ -157,15 +181,24 @@ namespace Travelers
 
         public List<Vector2> EmptyNeighbors(int i, int j)
         {
-            var blank = textures["_"][0];
-            return Neighbors(i, j).FindAll(t => this.fields[i, j] == blank);
+            var ns = Neighbors(i, j);
+            var es = ns.FindAll(t => this.fields[(int)t.X, (int)t.Y].biome == null);
+
+            return es;
+        }
+
+        public List<string> AllBiomesInNeighbors(Vector2 f) => AllBiomesInNeighbors((int)f.X, (int)f.Y);
+
+        public List<string> AllBiomesInNeighbors(int i, int j)
+        {
+            return Neighbors(i, j).Select(t => this.fields[(int)t.X, (int)t.Y].biome).ToList();
         }
 
         public List<string> BiomesInNeighbors(Vector2 f) => BiomesInNeighbors((int)f.X, (int)f.Y);
 
         public List<string> BiomesInNeighbors(int i, int j)
         {
-            return Neighbors(i, j).Select(t => this.fields[i, j].biome).Distinct().ToList();
+            return Neighbors(i, j).Select(t => this.fields[(int)t.X, (int)t.Y].biome).Distinct().ToList();
         }
 
         internal void Put(Vector2 n, string reg) => Put((int)n.X, (int)n.Y, reg);
@@ -178,6 +211,16 @@ namespace Travelers
             var v = biomes[r.Next(0, biomes.Count)];
             var ts = textures[v];
             fields[i, j] = ts[r.Next(0, ts.Length)];
+        }
+
+        internal List<Vector2> GetAll(string reg)
+        {
+            List<Vector2> result = new List<Vector2>();
+            for (int i = 0; i < MapWidth; i++)
+                for (int j = 0; j < MapHeight; j++)
+                    if (fields[i, j].biome == reg) result.Add(new Vector2(i, j));
+
+            return result;
         }
 
         internal void Fill(string v)

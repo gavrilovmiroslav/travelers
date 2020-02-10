@@ -22,16 +22,18 @@ namespace Travelers
         public Travelers()
         {
             graphics = new GraphicsDeviceManager(this);
-            
             Content.RootDirectory = "Content";
-            graphics.GraphicsProfile = GraphicsProfile.HiDef;
         }
 
         protected override void Initialize()
         {
             base.Initialize();
+
+            graphics.PreferredBackBufferWidth = 1280;
+            graphics.PreferredBackBufferHeight = 800;
+            graphics.ApplyChanges();
         }
-        
+
         protected override void LoadContent()
         {
             spriteBatch = new SpriteBatch(GraphicsDevice);
@@ -43,19 +45,20 @@ namespace Travelers
             map = new HexMap(20, 20);
             map.Dimensions(80, 0, 160, 140);
             map.Blank("tile_ocean_plain_dark_");
-            map.DefineBiomes("town", "city", "forest", "hills", "mountains", "valley", "water");
+            map.DefineBiomes("town", "city", "forest", "hills", "moors", "mountains", "valley", "water", "ocean");
 
-            map.TieBiomes("city", "town", 5);
-            map.TieBiomes("city", "water", 1);
-            map.TieBiomes("city", "forest", 1);
-            map.TieBiomes("city", "mountains", 1);
-            map.TieBiomes("city", "valley", 1);
-            map.TieBiomes("city", "city", 1);
+            map.TieBiomes("city", "town", 4);
+            map.TieBiomes("city", "forest", 5);
+            map.TieBiomes("city", "valley", 5);
 
-            map.TieBiomes("town", "city", 5);
+            map.TieBiomes("moors", "moors", 5);
+            map.TieBiomes("moors", "water", 5);
+
             map.TieBiomes("town", "valley", 3);
-            map.TieBiomes("town", "water", 2);
-            map.TieBiomes("town", "forest", 1);
+            map.TieBiomes("town", "town", 1);
+            map.TieBiomes("town", "hills", 3);
+            map.TieBiomes("town", "water", 3);
+            map.TieBiomes("town", "forest", 3);
 
             map.TieBiomes("forest", "forest", 3);
             map.TieBiomes("forest", "hills", 3);
@@ -72,25 +75,35 @@ namespace Travelers
 
             map.TieBiomes("valley", "valley", 2);
             map.TieBiomes("valley", "hills", 2);
-            map.TieBiomes("valley", "mountain", 2);
+            map.TieBiomes("valley", "mountains", 2);
             map.TieBiomes("valley", "forest", 4);
 
             map.TieBiomes("water", "water", 5);
-            map.TieBiomes("water", "mountain", 4);
+            map.TieBiomes("water", "mountains", 4);
             map.TieBiomes("water", "valley", 1);
 
             map.Add("city_clear", "town", "tile_city_clear_green_", 0, 9);
             map.Add("city_covered", "city", "tile_city_covered_green_", 0, 9);
             map.Add("forest_conifer_dense_clear", "forest", "tile_forest_conifer_dense_clear_green_", 0, 9);
             map.Add("forest_conifer_dense_covered", "forest", "tile_forest_conifer_dense_covered_green_", 0, 9);
+            map.Add("forest_conifer_sparse_clear", "forest", "tile_forest_conifer_sparse_clear_green_", 0, 9);
+            map.Add("forest_conifer_sparse_covered", "forest", "tile_forest_conifer_sparse_covered_green_", 0, 9);
+            map.Add("forest_deciduous_dense_clear", "forest", "tile_forest_deciduous_dense_clear_green_", 0, 9);
+            map.Add("forest_deciduous_dense_covered", "forest", "tile_forest_deciduous_dense_covered_green_", 0, 9);
+            map.Add("forest_deciduous_sparse_clear", "forest", "tile_forest_deciduous_sparse_clear_green_", 0, 9);
+            map.Add("forest_deciduous_sparse_covered", "forest", "tile_forest_deciduous_sparse_covered_green_", 0, 9);
             map.Add("hills_dense_clear", "hills", "tile_hills_dense_clear_green_", 0, 9);
             map.Add("hills_sparse_covered", "hills", "tile_hills_sparse_covered_green_", 0, 9);
             map.Add("mountain_peak_forest_conifer", "mountains", "tile_mountain_peak_forest_conifer_green_", 0, 9);
             map.Add("mountain_peak_forest_deciduous", "mountains", "tile_mountain_peak_forest_deciduous_green_", 0, 9);
+            map.Add("mountain_peak_grassland_green", "mountains", "tile_mountain_peak_grassland_green_", 0, 9);
             map.Add("valley_dense_clear", "valley", "tile_valley_dense_clear_green_", 0, 9);
             map.Add("valley_sparse_clear", "valley", "tile_valley_sparse_clear_green_", 0, 9);
             map.Add("ocean_waves_small_dark", "water", "tile_ocean_waves_small_dark_", 0, 9);
-            map.Add("ocean_waves_big_dark", "water", "tile_ocean_waves_big_dark_", 0, 9);
+            map.Add("ocean_waves_big_dark", "ocean", "tile_ocean_waves_big_dark_", 0, 9);
+            map.Add("moor_sparse_covered", "moors", "tile_moor_sparse_covered_blue_", 0, 9);
+            map.Add("moor_dense_clear", "moors", "tile_moor_dense_clear_blue_", 0, 9);
+
             map.Load(Content);
 
             Creator.Island(ref map);
