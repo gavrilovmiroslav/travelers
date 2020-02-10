@@ -56,6 +56,18 @@ namespace Travelers
             biomeTies[b1][b2] += prob;
         }
 
+        public string RandomBiomeAround(string b)
+        {
+            List<string> choice = new List<string>();
+            if (!biomeTies.ContainsKey(b)) return b;
+            foreach(var v in biomeTies[b])
+            {
+                for (int i = 0; i < v.Value; i++) choice.Add(v.Key);
+            }
+
+            return choice[r.Next(0, choice.Count)];
+        }
+
         public Random r = new Random();
 
         public HexMap(int w, int h)
@@ -140,6 +152,8 @@ namespace Travelers
 
             return list.FindAll(t => t.X >= 0 && t.X < this.MapWidth && t.Y >= 0 && t.Y < this.MapHeight);
         }
+
+        public List<Vector2> EmptyNeighbors(Vector2 f) => EmptyNeighbors((int)f.X, (int)f.Y);
 
         public List<Vector2> EmptyNeighbors(int i, int j)
         {

@@ -61,7 +61,19 @@ namespace Travelers
             {
                 Vector2 f = nextUp.Dequeue();
                 var bs = map.BiomesInNeighbors(f);
-                Console.WriteLine(bs[r.Next(0, bs.Count)]);
+                var viable = bs[r.Next(0, bs.Count)];
+
+                map.Put(f, map.RandomBiomeAround(viable));
+
+                foreach (var n in map.EmptyNeighbors(f))
+                {
+                    var chanceToFail = HexMap.Distance(n, center) * 3;
+                    Console.WriteLine(chanceToFail);
+                    map.Put(n, "town");
+
+                    if (r.Next(0, 100) > chanceToFail)
+                        next.Add(n);
+                }
             }
         }
     }
