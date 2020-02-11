@@ -123,16 +123,10 @@ namespace Travelers
                         family = tile.Key
                     };
 
-                    if(tile.Value.biome == "water" || tile.Value.biome == "ocean")
-                    {
-                        textures[i].tick = r.Next(60, 120);
-                        textures[i].timer = 0;
-                    }
-                    else
-                    {
-                        textures[i].tick = 360;
-                        textures[i].timer = r.Next(0, 360);
-                    }
+                    
+                    textures[i].tick = 360;
+                    textures[i].timer = r.Next(0, 360);
+                    
                 }
                 biomes.Add(tile.Key, textures);
             }
@@ -153,24 +147,32 @@ namespace Travelers
                         tex.timer = 0;
                     }
 
+                    var scale = Vector2.One;
+
+                    var dt = 0.0f;
+                    var st = 0.0f;
+
                     if (tex.biome == "water" || tex.biome == "ocean")
                     {
-                        tex.timer++;
+                        dt = 0.25f; st = 0.04f;
 
                         if (tex.timer == 1)
                         {
-                            tex.tick = r.Next(60, 120);
                             Put(i, j, tex.biome);
                         }
                     }
-
-                    var scale = Vector2.One;
-                    if (tex.biome != "water" && tex.biome != "ocean")
+                    else if (tex.biome == "moors")
                     {
-                        tex.timer += 0.25f;
-                        float s = 1.0f + (float)Math.Sin(tex.timer * Math.PI / 180.0f) * 0.01f;
-                        scale *= s;
+                        dt = 0.33f; st = 0.05f;
                     }
+                    else if (tex.biome == "forest")
+                    {
+                        dt = 0.33f; st = 0.02f;
+                    }
+
+                    tex.timer += dt;
+                    float s = 1.0f + (float)Math.Sin(tex.timer * Math.PI / 180.0f) * st;
+                    scale *= s;
 
                     var origin = new Vector2(tex.texture.Width / 2, tex.texture.Height / 2);
                     if (j % 2 == 0)
