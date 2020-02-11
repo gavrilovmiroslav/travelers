@@ -24,19 +24,39 @@ namespace Travelers
             }
         }
 
+        static int Ord(Vector2 v1, Vector2 v2)
+        {
+            if (v1.X >= 0)
+            {
+                if (v2.X < 0)
+                {
+                    return -1;
+                }
+                return -Comparer<float>.Default.Compare(v1.Y, v2.Y);
+            }
+            else
+            {
+                if (v2.X >= 0)
+                {
+                    return 1;
+                }
+                return Comparer<float>.Default.Compare(v1.Y, v2.Y);
+            }
+        }
+
         public static void Island(ref HexMap map)
         {
             Random r = new Random();
             map.Fill("_");
 
-            int ci = map.MapWidth / 2; 
+            int ci = map.MapWidth / 2;
             int cj = map.MapHeight / 2;
             Vector2 center = new Vector2(ci, cj);
 
             List<Vector2> used = new List<Vector2>();
             List<Vector2> next = new List<Vector2>();
 
-            for(int i = 0; i < 4; i++)
+            for (int i = 0; i < 4; i++)
             {
                 int di = ci + r.Next(-map.MapWidth / 2, map.MapWidth / 2);
                 int dj = cj + r.Next(-map.MapHeight / 2, map.MapHeight / 2);
@@ -61,7 +81,7 @@ namespace Travelers
 
             Queue<Vector2> nextUp = new Queue<Vector2>(next);
 
-            while(nextUp.Count > 0)
+            while (nextUp.Count > 0)
             {
                 Vector2 f = nextUp.Dequeue();
                 if (map.fields[(int)f.X, (int)f.Y].biome != null) continue;
@@ -74,7 +94,7 @@ namespace Travelers
 
                 var neighbors = map.EmptyNeighbors(f);
                 foreach (var n in neighbors)
-                {                    
+                {
                     var chanceToFail = HexMap.Distance(n, center) * 8;
                     if (r.Next(0, 100) > chanceToFail)
                     {
@@ -83,13 +103,15 @@ namespace Travelers
                 }
             }
 
+            // moors and waters
+
             foreach (var field in used)
             {
                 var mf = map.fields[(int)field.X, (int)field.Y];
-                if (mf.biome == "water" && 
+                if ((mf.biome == "water") &&
                     map.BiomesInNeighbors(field).Contains("valley"))
                 {
-                    if(r.Next(0, 100) > 50)
+                    if (r.Next(0, 100) > 50)
                         map.Put(field, "moors");
                 }
             }
@@ -102,10 +124,67 @@ namespace Travelers
                     {
                         var prob = r.Next(0, 10);
                         if (prob < 5) map.Put(n, "water");
-                        else if (prob < 2) map.Put(n, "ocean");
                     }
                 }
             }
+
+            // cities
+
+            char sym = '@';
+
+            bool[,] ch = new bool[map.MapWidth, map.MapHeight];
+            for (int i = 0; i < map.MapWidth; i++)
+                for (int j = 0; j < map.MapHeight; j++)
+                    ch[i, j] = false;
+
+            foreach (var i in map.Towns)
+            {
+                var f = map.fields[(int)i.X, (int)i.Y];
+                if (f.symbol > '@') continue;
+
+                Queue<Vector2> up = new Queue<Vector2>();
+                var lst = map.Neighbors(i);
+                var greatest = f.symbol;
+
+                foreach (var n in lst)
+                {
+                    if (map.fields[(int)n.X, (int)n.Y].symbol > greatest)
+                        greatest = map.fields[(int)n.X, (int)n.Y].symbol;
+                }
+
+                if (greatest <= '@')
+                    map.fields[(int)i.X, (int)i.Y].symbol = ++sym;
+
+                foreach (var t in lst.FindAll(t => !ch[(int)t.X, (int)t.Y]).Distinct())
+                {
+                    var m = map.fields[(int)t.X, (int)t.Y];
+                    if (m.biome == "town" || m.biome == "city")
+                        up.Enqueue(t);
+                }
+
+                while (up.Count > 0)
+                {
+                    var dup = up.Dequeue();
+                    var xx = (int)dup.X;
+                    var yy = (int)dup.Y;
+                    if (ch[xx, yy]) continue;
+
+                    ch[xx, yy] = true;
+                    map.fields[xx, yy].symbol = sym;
+
+                    lst = map.Neighbors(i);
+
+                    foreach (var t in lst.FindAll(t => !ch[(int)t.X, (int)t.Y]).Distinct())
+                    {
+                        var m = map.fields[(int)t.X, (int)t.Y];
+                        if (m.biome == "town" || m.biome == "city")
+                            if(!up.Contains(t))
+                                up.Enqueue(t);
+                    }
+                }
+            }
+
+            
         }
     }
 }

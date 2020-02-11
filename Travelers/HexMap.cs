@@ -9,13 +9,27 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Travelers
 {
-    public class PaintedTile
+    public class PaintedTile : ICloneable
     {
         public string biome;
         public string family;
         public Texture2D texture;
         public float tick;
         public float timer;
+        public char symbol = ' ';
+
+        public object Clone()
+        {
+            return new PaintedTile()
+            {
+                biome = biome,
+                family = family,
+                texture = texture,
+                tick = tick,
+                timer = timer,
+                symbol = symbol
+            };
+        }
     }
 
     public struct Tile
@@ -44,7 +58,7 @@ namespace Travelers
         public List<string> Region = new List<string>();
         public Dictionary<string, List<string>> BiomesPerRegion = new Dictionary<string, List<string>>();
         public Dictionary<string, Tile> TilePerBiome = new Dictionary<string, Tile>();
-
+        public List<Vector2> Towns = new List<Vector2>();
         public Dictionary<string, Dictionary<string, int>> biomeTies = new Dictionary<string, Dictionary<string, int>>();
         
         public void TieBiomes(string b1, string b2, int prob)
@@ -88,6 +102,8 @@ namespace Travelers
             TileHeight = h;
         }
 
+        public Vector2 XY(int i, int j) => new Vector2(j % 2 * TileX + i * TileWidth, j % 2 * TileY + j * TileHeight);
+
         public void Blank(string filename)
         {
             TilePerBiome.Add("_", new Tile() { filename = filename, min = 0, max = 1, biome = null });            
@@ -123,19 +139,19 @@ namespace Travelers
                         family = tile.Key
                     };
 
-                    
                     textures[i].tick = 360;
-                    textures[i].timer = r.Next(0, 360);
-                    
+                    textures[i].timer = r.Next(0, 360);   
                 }
+
                 biomes.Add(tile.Key, textures);
             }
 
             textures = biomes;
         }
 
-        public void Draw(SpriteBatch spriteBatch)
+        public void Draw(SpriteBatch spriteBatch, SpriteFont font)
         {
+            // draw map
             for (int i = 0; i < MapWidth; i++)
                 for (int j = 0; j < MapHeight; j++)
                 {
@@ -152,9 +168,9 @@ namespace Travelers
                     var dt = 0.0f;
                     var st = 0.0f;
 
-                    if (tex.biome == "water" || tex.biome == "ocean")
+                    if (tex.biome == "water")
                     {
-                        dt = 0.25f; st = 0.04f;
+                        dt = 1f; st = 0.03f;
 
                         if (tex.timer == 1)
                         {
@@ -174,18 +190,13 @@ namespace Travelers
                     float s = 1.0f + (float)Math.Sin(tex.timer * Math.PI / 180.0f) * st;
                     scale *= s;
 
-                    var origin = new Vector2(tex.texture.Width / 2, tex.texture.Height / 2);
-                    if (j % 2 == 0)
-                    {
-                        var xy = new Vector2(i * TileWidth, j * TileHeight);
-                        spriteBatch.Draw(tex.texture, xy, null, Color.White, 0, origin, scale, SpriteEffects.None, 0);
-                    }
-                    else
-                    {
-                        var xy = new Vector2(TileX + i * TileWidth, TileY + j * TileHeight);
-                        spriteBatch.Draw(tex.texture, xy, null, Color.White, 0, origin, scale, SpriteEffects.None, 0);
-                    }
+                    var origin = new Vector2(tex.texture.Width / 2, tex.texture.Height / 2);                   
+                    spriteBatch.Draw(tex.texture, XY(i, j), null, Color.White, 0, origin, scale, SpriteEffects.None, 0);
+
+                    spriteBatch.DrawString(font, $"{tex.symbol}", XY(i, j), Color.White);
                 }
+
+            // draw things
         }
 
         public List<Vector2> Neighbors(Vector2 f) => Neighbors((int)f.X, (int)f.Y);
@@ -195,10 +206,10 @@ namespace Travelers
             var list = new List<Vector2>() {
                 new Vector2(i - 1, j),
                 new Vector2(i + 1, j),
-                new Vector2(i - 1, j - 1),
-                new Vector2(i - 1, j + 1),
-                new Vector2(i, j - 1),
-                new Vector2(i, j + 1),
+                new Vector2(j % 2 + i - 1, j - 1),
+                new Vector2(j % 2 + i - 1, j + 1),
+                new Vector2(j % 2 + i, j - 1),
+                new Vector2(j % 2 + i, j + 1),
             };
 
             return list.FindAll(t => t.X >= 0 && t.X < this.MapWidth && t.Y >= 0 && t.Y < this.MapHeight);
@@ -234,10 +245,22 @@ namespace Travelers
         {
             if (i < 0 || j < 0 || i >= MapWidth || j >= MapHeight) return;
 
-            var biomes = BiomesPerRegion[reg];
-            var v = biomes[r.Next(0, biomes.Count)];
-            var ts = textures[v];
-            fields[i, j] = ts[r.Next(0, ts.Length)];
+            if (reg == "_")
+            {
+                fields[i, j] = textures["_"][0];
+            }
+            else
+            {
+                var biomes = BiomesPerRegion[reg];
+                var v = biomes[r.Next(0, biomes.Count)];
+                var ts = textures[v];
+                fields[i, j] = (PaintedTile)ts[r.Next(0, ts.Length)].Clone();
+
+                if (reg == "town" || reg == "city")
+                {
+                    Towns.Add(new Vector2(i, j));
+                }
+            }
         }
 
         internal List<Vector2> GetAll(string reg)

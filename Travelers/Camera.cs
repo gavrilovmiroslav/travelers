@@ -33,8 +33,20 @@ namespace Travelers
         {
             center = new Vector2(position.X, position.Y);
             transform = Matrix.CreateTranslation(new Vector3(-center.X, -center.Y, 0)) *
-                        Matrix.CreateScale(new Vector3(zoom, zoom, 0)) *
+                        Matrix.CreateRotationZ(0) *
+                        Matrix.CreateScale(new Vector3(zoom, zoom, 1)) *
                         Matrix.CreateTranslation(new Vector3(viewport.Width / 2, viewport.Height / 2, 0));
         }
+
+
+        public Vector2 ScreenToWorldSpace(Vector2 point)
+        {
+//            var p = new Vector2(point.X / viewport.Width, point.Y / viewport.Height);
+  //          Console.WriteLine($"Viewspace: {p}");
+            Matrix invertedMatrix = Matrix.Invert(transform);
+            Console.WriteLine(invertedMatrix);
+            return Vector2.Transform(point, invertedMatrix);
+        }
+
     }
 }

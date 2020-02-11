@@ -12,7 +12,8 @@ namespace Travelers
         SpriteBatch spriteBatch;
 
         HexMap map;
-        Texture2D tile;
+        Texture2D castle;
+        Vector2 castleXY;
 
         Camera camera;
         Vector2 center = new Vector2(0, 0);
@@ -32,6 +33,8 @@ namespace Travelers
             graphics.PreferredBackBufferWidth = 1280;
             graphics.PreferredBackBufferHeight = 800;
             graphics.ApplyChanges();
+
+            this.IsMouseVisible = true;
         }
 
         protected override void LoadContent()
@@ -39,13 +42,14 @@ namespace Travelers
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
             font = Content.Load<SpriteFont>("Arial");
+            castle = Content.Load<Texture2D>("overlay_location_framed_uncut_standard_castle");
 
             camera = new Camera(graphics.GraphicsDevice.Viewport);
 
             map = new HexMap(20, 20);
             map.Dimensions(80, 0, 160, 140);
             map.Blank("tile_ocean_plain_dark_");
-            map.DefineBiomes("town", "city", "forest", "hills", "moors", "mountains", "valley", "water", "ocean");
+            map.DefineBiomes("town", "city", "forest", "hills", "moors", "mountains", "valley", "water");
 
             map.TieBiomes("city", "town", 4);
             map.TieBiomes("city", "forest", 5);
@@ -55,11 +59,12 @@ namespace Travelers
             map.TieBiomes("moors", "water", 5);
 
             map.TieBiomes("town", "valley", 3);
-            map.TieBiomes("town", "town", 1);
+            map.TieBiomes("town", "town", 2);
             map.TieBiomes("town", "hills", 3);
-            map.TieBiomes("town", "water", 3);
+            map.TieBiomes("town", "water", 2);
             map.TieBiomes("town", "forest", 3);
 
+            map.TieBiomes("forest", "town", 2);
             map.TieBiomes("forest", "forest", 3);
             map.TieBiomes("forest", "hills", 3);
             map.TieBiomes("forest", "mountains", 3);
@@ -77,6 +82,7 @@ namespace Travelers
             map.TieBiomes("valley", "hills", 2);
             map.TieBiomes("valley", "mountains", 2);
             map.TieBiomes("valley", "forest", 4);
+            map.TieBiomes("valley", "town", 2);
 
             map.TieBiomes("water", "water", 5);
             map.TieBiomes("water", "mountains", 4);
@@ -100,7 +106,7 @@ namespace Travelers
             map.Add("valley_dense_clear", "valley", "tile_valley_dense_clear_green_", 0, 9);
             map.Add("valley_sparse_clear", "valley", "tile_valley_sparse_clear_green_", 0, 9);
             map.Add("ocean_waves_small_dark", "water", "tile_ocean_waves_small_dark_", 0, 9);
-            map.Add("ocean_waves_big_dark", "ocean", "tile_ocean_waves_big_dark_", 0, 9);
+            map.Add("ocean_waves_big_dark", "water", "tile_ocean_waves_big_dark_", 0, 9);
             map.Add("moor_sparse_covered", "moors", "tile_moor_sparse_covered_blue_", 0, 9);
             map.Add("moor_dense_clear", "moors", "tile_moor_dense_clear_blue_", 0, 9);
 
@@ -138,6 +144,18 @@ namespace Travelers
                 if (camera.zoom > 1f) camera.zoom = 1f;
             }
 
+            var mouse = Mouse.GetState();
+            if(mouse.LeftButton == ButtonState.Pressed)
+            {
+                Console.WriteLine("!");
+                var v = new Vector2(mouse.X, mouse.Y);
+                Console.WriteLine($"Window space: {v}");
+
+                var tv = camera.ScreenToWorldSpace(v);
+                Console.WriteLine($"{v} -> {tv}");
+
+                castleXY = tv;
+            }
             base.Update(gameTime);
             camera.Update(center);
         }
@@ -147,8 +165,10 @@ namespace Travelers
             GraphicsDevice.Clear(new Color(105, 105, 108));
 
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, null, null, null, null, camera.Transform);            
-            map.Draw(spriteBatch);
+            map.Draw(spriteBatch, font);
 
+            var origin = new Vector2(castle.Width / 2, castle.Height / 2);            
+            spriteBatch.Draw(castle, castleXY, null, Color.White, 0, origin, Vector2.One, SpriteEffects.None, 1);
             spriteBatch.End();
             
             base.Draw(gameTime);
