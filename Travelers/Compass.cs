@@ -14,7 +14,7 @@ namespace Travelers
 
     public static class CompassExtension
     {
-        public static Compass? Direction(this Vector2 a, Vector2 b)
+        public static Compass Direction(this Vector2 a, Vector2 b)
         {
             if (a == b) return Compass.C;
 
@@ -34,7 +34,7 @@ namespace Travelers
                 }
             }
 
-            return null;
+            throw new Exception("Compass wrong.");
         }
 
         public static Compass[] Neighbors(this Compass c)

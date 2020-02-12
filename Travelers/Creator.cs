@@ -372,9 +372,15 @@ namespace Travelers
                     
                     map[cand].color = Color.Purple;
                     Console.WriteLine(current.Direction(cand));
+
+                    var cat = map.PathClasses["paths"].PathPieces[dir][current.Direction(cand)];
+                    path.Add(current, rng.FromArray(cat));
+
                     current = cand;
+                    dir = current.Direction(cand).Inverse();
                 }
 
+                map.AddPath("paths", path);
             }
         }
     }
