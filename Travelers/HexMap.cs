@@ -59,6 +59,7 @@ namespace Travelers
         public Dictionary<string, List<string>> BiomesPerRegion = new Dictionary<string, List<string>>();
         public Dictionary<string, Tile> TilePerBiome = new Dictionary<string, Tile>();
         public List<Vector2> Towns = new List<Vector2>();
+        public Dictionary<char, List<Vector2>> TownFields = new Dictionary<char, List<Vector2>>();
         public Dictionary<string, Dictionary<string, int>> biomeTies = new Dictionary<string, Dictionary<string, int>>();
         
         public void TieBiomes(string b1, string b2, int prob)
@@ -193,7 +194,7 @@ namespace Travelers
                     var origin = new Vector2(tex.texture.Width / 2, tex.texture.Height / 2);                   
                     spriteBatch.Draw(tex.texture, XY(i, j), null, Color.White, 0, origin, scale, SpriteEffects.None, 0);
 
-                    spriteBatch.DrawString(font, $"{tex.symbol}", XY(i, j), Color.White);
+                    spriteBatch.DrawString(font, $"{tex.symbol}", XY(i, j), Color.White, 0, font.MeasureString($"{tex.symbol}") / 2, 1, SpriteEffects.None, 1);
                 }
 
             // draw things

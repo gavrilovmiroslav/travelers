@@ -132,59 +132,48 @@ namespace Travelers
 
             char sym = '@';
 
-            bool[,] ch = new bool[map.MapWidth, map.MapHeight];
-            for (int i = 0; i < map.MapWidth; i++)
-                for (int j = 0; j < map.MapHeight; j++)
-                    ch[i, j] = false;
+            foreach (var t in map.Towns)
+                map.fields[(int)t.X, (int)t.Y].symbol = ++sym;
 
-            foreach (var i in map.Towns)
+            var processing = true;
+            while (processing)
             {
-                var f = map.fields[(int)i.X, (int)i.Y];
-                if (f.symbol > '@') continue;
-
-                Queue<Vector2> up = new Queue<Vector2>();
-                var lst = map.Neighbors(i);
-                var greatest = f.symbol;
-
-                foreach (var n in lst)
+                processing = false;
+                foreach (var t in map.Towns)
                 {
-                    if (map.fields[(int)n.X, (int)n.Y].symbol > greatest)
-                        greatest = map.fields[(int)n.X, (int)n.Y].symbol;
-                }
+                    var tf = map.fields[(int)t.X, (int)t.Y];
 
-                if (greatest <= '@')
-                    map.fields[(int)i.X, (int)i.Y].symbol = ++sym;
-
-                foreach (var t in lst.FindAll(t => !ch[(int)t.X, (int)t.Y]).Distinct())
-                {
-                    var m = map.fields[(int)t.X, (int)t.Y];
-                    if (m.biome == "town" || m.biome == "city")
-                        up.Enqueue(t);
-                }
-
-                while (up.Count > 0)
-                {
-                    var dup = up.Dequeue();
-                    var xx = (int)dup.X;
-                    var yy = (int)dup.Y;
-                    if (ch[xx, yy]) continue;
-
-                    ch[xx, yy] = true;
-                    map.fields[xx, yy].symbol = sym;
-
-                    lst = map.Neighbors(i);
-
-                    foreach (var t in lst.FindAll(t => !ch[(int)t.X, (int)t.Y]).Distinct())
+                    foreach (var n in map.Neighbors(t))
                     {
-                        var m = map.fields[(int)t.X, (int)t.Y];
-                        if (m.biome == "town" || m.biome == "city")
-                            if(!up.Contains(t))
-                                up.Enqueue(t);
+                        var nf = map.fields[(int)n.X, (int)n.Y];
+                        if (nf.biome == "town" || nf.biome == "city")
+                            if (tf.symbol < nf.symbol)
+                            {
+                                nf.symbol = tf.symbol;
+                                processing = true;
+                            }
                     }
                 }
             }
 
-            
+            foreach (var t in map.Towns)
+            {
+                var tf = map.fields[(int)t.X, (int)t.Y];
+                if (!map.TownFields.ContainsKey(tf.symbol))
+                    map.TownFields.Add(tf.symbol, new List<Vector2>());
+
+                map.TownFields[tf.symbol].Add(t);
+            }
+
+            {
+                char i = '@';
+                foreach (var p in map.TownFields)
+                {
+                    i++;
+                    foreach (var f in p.Value)
+                        map.fields[(int)f.X, (int)f.Y].symbol = i;
+                }
+            }
         }
     }
 }

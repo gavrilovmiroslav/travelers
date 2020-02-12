@@ -147,12 +147,8 @@ namespace Travelers
             var mouse = Mouse.GetState();
             if(mouse.LeftButton == ButtonState.Pressed)
             {
-                Console.WriteLine("!");
                 var v = new Vector2(mouse.X, mouse.Y);
-                Console.WriteLine($"Window space: {v}");
-
                 var tv = camera.ScreenToWorldSpace(v);
-                Console.WriteLine($"{v} -> {tv}");
 
                 castleXY = tv;
             }
@@ -167,7 +163,7 @@ namespace Travelers
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, null, null, null, null, camera.Transform);            
             map.Draw(spriteBatch, font);
 
-            var origin = new Vector2(castle.Width / 2, castle.Height / 2);            
+            var origin = new Vector2(castle.Width / 2, castle.Height / 2);
             spriteBatch.Draw(castle, castleXY, null, Color.White, 0, origin, Vector2.One, SpriteEffects.None, 1);
             spriteBatch.End();
             

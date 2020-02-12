@@ -41,12 +41,13 @@ namespace Travelers
 
         public Vector2 ScreenToWorldSpace(Vector2 point)
         {
-//            var p = new Vector2(point.X / viewport.Width, point.Y / viewport.Height);
-  //          Console.WriteLine($"Viewspace: {p}");
-            Matrix invertedMatrix = Matrix.Invert(transform);
-            Console.WriteLine(invertedMatrix);
+            Matrix invertedMatrix = Matrix.Invert(transform);            
             return Vector2.Transform(point, invertedMatrix);
         }
 
+        public Vector2 WorldToScreenSpace(Vector2 point)
+        {
+            return Vector2.Transform(point, transform);
+        }
     }
 }
