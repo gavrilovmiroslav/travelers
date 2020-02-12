@@ -43,8 +43,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Camera.cs" />
+    <Compile Include="Character.cs" />
+    <Compile Include="Compass.cs" />
     <Compile Include="Creator.cs" />
     <Compile Include="HexMap.cs" />
+    <Compile Include="Path.cs" />
     <Compile Include="Travelers.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

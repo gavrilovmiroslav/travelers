@@ -12,8 +12,6 @@ namespace Travelers
         SpriteBatch spriteBatch;
 
         HexMap map;
-        Texture2D castle;
-        Vector2 castleXY;
 
         Camera camera;
         Vector2 center = new Vector2(0, 0);
@@ -41,8 +39,7 @@ namespace Travelers
         {
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
-            font = Content.Load<SpriteFont>("Arial");
-            castle = Content.Load<Texture2D>("overlay_location_framed_uncut_standard_castle");
+            font = Content.Load<SpriteFont>("Samble");
 
             camera = new Camera(graphics.GraphicsDevice.Viewport);
 
@@ -110,6 +107,54 @@ namespace Travelers
             map.Add("moor_sparse_covered", "moors", "tile_moor_sparse_covered_blue_", 0, 9);
             map.Add("moor_dense_clear", "moors", "tile_moor_dense_clear_blue_", 0, 9);
 
+            var rivers = new PathClass(Content) { FamilyName = "rivers" };
+            rivers.Add(Compass.C, Compass.E, "overlay_river", 2);
+            rivers.Add(Compass.C, Compass.W, "overlay_river", 2);
+            rivers.Add(Compass.C, Compass.NE, "overlay_river", 3);
+            rivers.Add(Compass.C, Compass.NW, "overlay_river", 3);
+            rivers.Add(Compass.C, Compass.SE, "overlay_river", 3);
+            rivers.Add(Compass.C, Compass.SW, "overlay_river", 3);
+            rivers.Add(Compass.E, Compass.SE, "overlay_river", 2);
+            rivers.Add(Compass.E, Compass.SW, "overlay_river", 2);
+            rivers.Add(Compass.E, Compass.W, "overlay_river", 3);
+            rivers.Add(Compass.NE, Compass.E, "overlay_river", 3);
+            rivers.Add(Compass.NE, Compass.SE, "overlay_river", 3);
+            rivers.Add(Compass.NE, Compass.SW, "overlay_river", 3);
+            rivers.Add(Compass.NE, Compass.W, "overlay_river", 3);
+            rivers.Add(Compass.NW, Compass.E, "overlay_river", 3);
+            rivers.Add(Compass.NW, Compass.NE, "overlay_river", 2);
+            rivers.Add(Compass.NW, Compass.SE, "overlay_river", 3);
+            rivers.Add(Compass.NW, Compass.SW, "overlay_river", 3);
+            rivers.Add(Compass.NW, Compass.W, "overlay_river", 3);
+            rivers.Add(Compass.SE, Compass.SW, "overlay_river", 2);
+            rivers.Add(Compass.SE, Compass.W, "overlay_river", 2);
+            rivers.Add(Compass.SW, Compass.W, "overlay_river", 2);
+            map.AddPathClass("rivers", rivers);
+
+            var paths = new PathClass(Content) { FamilyName = "paths" };
+            paths.Add(Compass.C, Compass.E, "overlay_path", 2);
+            paths.Add(Compass.C, Compass.W, "overlay_path", 2);
+            paths.Add(Compass.C, Compass.NE, "overlay_path", 3);
+            paths.Add(Compass.C, Compass.NW, "overlay_path", 3);
+            paths.Add(Compass.C, Compass.SE, "overlay_path", 3);
+            paths.Add(Compass.C, Compass.SW, "overlay_path", 3);
+            paths.Add(Compass.E, Compass.SE, "overlay_path", 2);
+            paths.Add(Compass.E, Compass.SW, "overlay_path", 2);
+            paths.Add(Compass.E, Compass.W, "overlay_path", 3);
+            paths.Add(Compass.NE, Compass.E, "overlay_path", 3);
+            paths.Add(Compass.NE, Compass.SE, "overlay_path", 3);
+            paths.Add(Compass.NE, Compass.SW, "overlay_path", 3);
+            paths.Add(Compass.NE, Compass.W, "overlay_path", 3);
+            paths.Add(Compass.NW, Compass.E, "overlay_path", 3);
+            paths.Add(Compass.NW, Compass.NE, "overlay_path", 2);
+            paths.Add(Compass.NW, Compass.SE, "overlay_path", 3);
+            paths.Add(Compass.NW, Compass.SW, "overlay_path", 3);
+            paths.Add(Compass.NW, Compass.W, "overlay_path", 3);
+            paths.Add(Compass.SE, Compass.SW, "overlay_path", 2);
+            paths.Add(Compass.SE, Compass.W, "overlay_path", 2);
+            paths.Add(Compass.SW, Compass.W, "overlay_path", 2);
+            map.AddPathClass("paths", paths);
+
             map.Load(Content);
 
             Creator.Island(ref map);
@@ -144,14 +189,6 @@ namespace Travelers
                 if (camera.zoom > 1f) camera.zoom = 1f;
             }
 
-            var mouse = Mouse.GetState();
-            if(mouse.LeftButton == ButtonState.Pressed)
-            {
-                var v = new Vector2(mouse.X, mouse.Y);
-                var tv = camera.ScreenToWorldSpace(v);
-
-                castleXY = tv;
-            }
             base.Update(gameTime);
             camera.Update(center);
         }
@@ -162,9 +199,6 @@ namespace Travelers
 
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, null, null, null, null, camera.Transform);            
             map.Draw(spriteBatch, font);
-
-            var origin = new Vector2(castle.Width / 2, castle.Height / 2);
-            spriteBatch.Draw(castle, castleXY, null, Color.White, 0, origin, Vector2.One, SpriteEffects.None, 1);
             spriteBatch.End();
             
             base.Draw(gameTime);

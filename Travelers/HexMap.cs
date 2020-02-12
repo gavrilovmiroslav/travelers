@@ -16,7 +16,8 @@ namespace Travelers
         public Texture2D texture;
         public float tick;
         public float timer;
-        public char symbol = ' ';
+        public char symbol = ' ';        
+        public Color color = Color.White;
 
         public object Clone()
         {
@@ -27,7 +28,8 @@ namespace Travelers
                 texture = texture,
                 tick = tick,
                 timer = timer,
-                symbol = symbol
+                symbol = symbol,                
+                color = color
             };
         }
     }
@@ -42,7 +44,7 @@ namespace Travelers
 
     public class HexMap
     {
-        public PaintedTile[,] fields;        
+        public PaintedTile[,] fields;
         public int cx, cy;
         Dictionary<string, PaintedTile[]> textures;
 
@@ -58,27 +60,30 @@ namespace Travelers
         public List<string> Region = new List<string>();
         public Dictionary<string, List<string>> BiomesPerRegion = new Dictionary<string, List<string>>();
         public Dictionary<string, Tile> TilePerBiome = new Dictionary<string, Tile>();
+
         public List<Vector2> Towns = new List<Vector2>();
         public Dictionary<char, List<Vector2>> TownFields = new Dictionary<char, List<Vector2>>();
-        public Dictionary<string, Dictionary<string, int>> biomeTies = new Dictionary<string, Dictionary<string, int>>();
+        public Dictionary<string, Dictionary<string, int>> BiomeTies = new Dictionary<string, Dictionary<string, int>>();
+        public Dictionary<string, PathClass> PathClasses = new Dictionary<string, PathClass>();
+        public Dictionary<string, List<Path>> Paths = new Dictionary<string, List<Path>>();
         
         public void TieBiomes(string b1, string b2, int prob)
         {
-            if (!biomeTies.ContainsKey(b1))
-                biomeTies.Add(b1, new Dictionary<string, int>());
+            if (!BiomeTies.ContainsKey(b1))
+                BiomeTies.Add(b1, new Dictionary<string, int>());
 
-            if (!biomeTies[b1].ContainsKey(b2))
-                biomeTies[b1].Add(b2, 0);
+            if (!BiomeTies[b1].ContainsKey(b2))
+                BiomeTies[b1].Add(b2, 0);
 
-            biomeTies[b1][b2] += prob;
+            BiomeTies[b1][b2] += prob;
         }
 
         public string RandomBiomeAround(string b)
         {
             if (b == null) b = "town";
             List<string> choice = new List<string>();
-            if (!biomeTies.ContainsKey(b)) return b;
-            foreach(var v in biomeTies[b])
+            if (!BiomeTies.ContainsKey(b)) return b;
+            foreach(var v in BiomeTies[b])
             {
                 for (int i = 0; i < v.Value; i++) choice.Add(v.Key);
             }
@@ -103,7 +108,23 @@ namespace Travelers
             TileHeight = h;
         }
 
-        public Vector2 XY(int i, int j) => new Vector2(j % 2 * TileX + i * TileWidth, j % 2 * TileY + j * TileHeight);
+        public Vector2 XY(int i, int j) => new Vector2(j % 2 * TileX + i * TileWidth, TileY + j * TileHeight);
+
+        public PaintedTile this[Vector2 v]
+        {
+            get
+            {
+                return this.fields[(int)v.X, (int)v.Y];
+            }
+        }
+
+        public PaintedTile this[float x, float y]
+        {
+            get
+            {
+                return this.fields[(int)x, (int)y];
+            }
+        }
 
         public void Blank(string filename)
         {
@@ -123,6 +144,19 @@ namespace Travelers
         public void DefineBiomes(params string[] biomes)
         {
             this.Region.AddRange(biomes);            
+        }
+
+        public void AddPathClass(string pathName, PathClass path)
+        {
+            this.PathClasses.Add(pathName, path);
+        }
+
+        public void AddPath(string pathName, Path path)
+        {
+            if (!this.Paths.ContainsKey(pathName))
+                this.Paths[pathName] = new List<Path>();
+
+            this.Paths[pathName].Add(path);
         }
 
         public void Load(ContentManager Content)
@@ -191,13 +225,42 @@ namespace Travelers
                     float s = 1.0f + (float)Math.Sin(tex.timer * Math.PI / 180.0f) * st;
                     scale *= s;
 
-                    var origin = new Vector2(tex.texture.Width / 2, tex.texture.Height / 2);                   
-                    spriteBatch.Draw(tex.texture, XY(i, j), null, Color.White, 0, origin, scale, SpriteEffects.None, 0);
+                    var origin = new Vector2(tex.texture.Width / 2, tex.texture.Height / 2);
+                    spriteBatch.Draw(tex.texture, XY(i, j), null, tex.color, 0, origin, scale, SpriteEffects.None, 0);
 
                     spriteBatch.DrawString(font, $"{tex.symbol}", XY(i, j), Color.White, 0, font.MeasureString($"{tex.symbol}") / 2, 1, SpriteEffects.None, 1);
                 }
 
             // draw things
+
+            foreach(var ps in Paths)
+                foreach (var p in ps.Value)
+                    p.Draw(spriteBatch);
+        }
+
+        public Vector2? HexAt(Vector2 tv)
+        {
+            int j = (int) ((tv.Y - TileY) / TileHeight + 0.5f);
+            int i = (int) ((tv.X - (j % 2 * TileX)) / TileWidth + 0.5f);
+
+            if (i < 0 || j < 0 || i >= MapWidth || j >= MapHeight)
+                return null;
+
+            return new Vector2(i, j);
+        }
+
+        public List<Vector2> NeighborsThatAre(Vector2 f, string name) => NeighborsThatAre((int)f.X, (int)f.Y, name);
+
+        public List<Vector2> NeighborsThatAre(int i, int j, string name)
+        {
+            return Neighbors(i, j).FindAll(t => this[t].biome == name);
+        }
+
+        public List<Vector2> NeighborsExcept(Vector2 f, string name) => NeighborsExcept((int)f.X, (int)f.Y, name);
+
+        public List<Vector2> NeighborsExcept(int i, int j, string name)
+        {
+            return Neighbors(i, j).FindAll(t => this[t].biome != name);
         }
 
         public List<Vector2> Neighbors(Vector2 f) => Neighbors((int)f.X, (int)f.Y);
@@ -221,7 +284,7 @@ namespace Travelers
         public List<Vector2> EmptyNeighbors(int i, int j)
         {
             var ns = Neighbors(i, j);
-            var es = ns.FindAll(t => this.fields[(int)t.X, (int)t.Y].biome == null);
+            var es = ns.FindAll(t => this[t].biome == null);
 
             return es;
         }
@@ -230,14 +293,14 @@ namespace Travelers
 
         public List<string> AllBiomesInNeighbors(int i, int j)
         {
-            return Neighbors(i, j).Select(t => this.fields[(int)t.X, (int)t.Y].biome).ToList();
+            return Neighbors(i, j).Select(t => this[t].biome).ToList();
         }
 
         public List<string> BiomesInNeighbors(Vector2 f) => BiomesInNeighbors((int)f.X, (int)f.Y);
 
         public List<string> BiomesInNeighbors(int i, int j)
         {
-            return Neighbors(i, j).Select(t => this.fields[(int)t.X, (int)t.Y].biome).Distinct().ToList();
+            return Neighbors(i, j).Select(t => this[t].biome).Distinct().ToList();
         }
 
         internal void Put(Vector2 n, string reg) => Put((int)n.X, (int)n.Y, reg);
@@ -270,6 +333,17 @@ namespace Travelers
             for (int i = 0; i < MapWidth; i++)
                 for (int j = 0; j < MapHeight; j++)
                     if (fields[i, j].biome == reg) result.Add(new Vector2(i, j));
+
+            return result;
+        }
+
+
+        internal List<Vector2> GetAllNot(string reg)
+        {
+            List<Vector2> result = new List<Vector2>();
+            for (int i = 0; i < MapWidth; i++)
+                for (int j = 0; j < MapHeight; j++)
+                    if (fields[i, j].biome != reg && fields[i, j].biome != null) result.Add(new Vector2(i, j));
 
             return result;
         }
