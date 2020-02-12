@@ -14,6 +14,29 @@ namespace Travelers
 
     public static class CompassExtension
     {
+        public static Compass? Direction(this Vector2 a, Vector2 b)
+        {
+            if (a == b) return Compass.C;
+
+            if (b.X == a.X + 1 && a.Y == b.Y) return Compass.E;
+            else if (b.X == a.X - 1 && a.Y == b.Y) return Compass.W;
+            else
+            {
+                if (b.Y == a.Y - 1)
+                {
+                    if (b.X == a.Y % 2 + a.X) return Compass.NE;
+                    else if (b.X == a.Y % 2 + a.X - 1) return Compass.NW;
+                }
+                else if (b.Y == a.Y + 1)
+                {
+                    if (b.X == a.Y % 2 + a.X) return Compass.SE;
+                    else if (b.X == a.Y % 2 + a.X - 1) return Compass.SW;
+                }
+            }
+
+            return null;
+        }
+
         public static Compass[] Neighbors(this Compass c)
         {
             switch (c)

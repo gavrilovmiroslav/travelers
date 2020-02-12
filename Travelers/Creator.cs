@@ -8,6 +8,14 @@ using System.Threading.Tasks;
 
 namespace Travelers
 {
+    public static class ArrayExtensions
+    {
+        public static T FromArray<T>(this Random rng, IList<T> arr)
+        {
+            return arr[rng.Next(0, arr.Count())];
+        }
+    }
+
     public static class Creator
     {
         private static string[] Names =
@@ -279,6 +287,94 @@ namespace Travelers
 
                 if (river.pieces.Count > 4)
                     map.AddPath("rivers", river);
+            }
+
+            // roads
+
+            const double max = 10000;
+            {
+                var traveler = new Character(map);
+                var towns = map.TownFields.Keys.ToArray();
+                char starting = rng.FromArray(towns);
+                char ending;
+                do
+                {
+                    ending = rng.FromArray(towns);
+                } while (starting == ending);
+
+                var xys = rng.FromArray(map.TownFields[starting]);
+                var xyd = rng.FromArray(map.TownFields[ending]);
+
+                map[xys].color = Color.Red;
+                map[xyd].color = Color.Green;
+
+                Dictionary<Vector2, double> optDist = new Dictionary<Vector2, double>();
+                Queue<Vector2> opts = new Queue<Vector2>();
+                opts.Enqueue(xys);
+
+                while(opts.Count > 0)
+                {
+                    var o = opts.Dequeue();
+                    var bo = map[o].biome;
+
+                    if (optDist.ContainsKey(o)) continue;
+
+                    optDist[o] = HexMap.Distance(o, xyd);
+                    if (bo == null || bo == "_" || bo == "water" || bo == "ocean")
+                        optDist[o] = max;
+                    else if (bo == "moors" || bo == "mountains")
+                        optDist[o] *= 2;
+                    else if (bo == "hills" || bo == "forest" || bo == "city")
+                        optDist[o] *= 1.15;
+
+                    foreach (var n in map.Neighbors(o))
+                    {
+                        var b = map[n].biome;
+                        if (b != null && b != "_" && b != "water" && b != "ocean")
+                            opts.Enqueue(n);
+                    }
+
+                    if (optDist.ContainsKey(xyd)) break;
+                }
+
+                for (int i = 0; i < map.MapWidth; i++)
+                    for (int j = 0; j < map.MapHeight; j++)
+                    {
+                        var no = new Vector2(i, j);
+                        if (optDist.ContainsKey(no)) map.diag[i, j] = optDist[no];
+                        else map.diag[i, j] = max;
+                    }
+
+                var path = new Path(map.PathClasses["paths"], map);
+                var current = xys;
+                var dir = Compass.C;
+
+                while (current != xyd)
+                {
+                    double min = max;
+
+                    var cand = current;
+                    foreach(var nx in map.Neighbors(current))
+                    {
+                        if (!optDist.ContainsKey(nx))
+                            optDist[nx] = 1000;
+
+                        var onx = optDist[nx];
+                        if (onx < min)
+                        {
+                            cand = nx;
+                            min = onx;
+                            optDist[nx] *= 2;
+                        }
+                    }
+
+                    if (cand == current) break;
+                    
+                    map[cand].color = Color.Purple;
+                    Console.WriteLine(current.Direction(cand));
+                    current = cand;
+                }
+
             }
         }
     }

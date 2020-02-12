@@ -186,7 +186,7 @@ namespace Travelers
             if (Keyboard.GetState().IsKeyDown(Keys.E))
             {
                 camera.zoom += 0.01f;
-                if (camera.zoom > 1f) camera.zoom = 1f;
+                if (camera.zoom > 2f) camera.zoom = 2f;
             }
 
             base.Update(gameTime);

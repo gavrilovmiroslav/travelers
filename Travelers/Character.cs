@@ -9,6 +9,8 @@ namespace Travelers
 {
     public class Character
     {
+        public Character(HexMap map) { }
+
         public void Update() { }
 
         public void Draw(SpriteBatch spriteBatch)

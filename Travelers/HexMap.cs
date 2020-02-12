@@ -45,6 +45,7 @@ namespace Travelers
     public class HexMap
     {
         public PaintedTile[,] fields;
+        public double[,] diag;
         public int cx, cy;
         Dictionary<string, PaintedTile[]> textures;
 
@@ -98,6 +99,7 @@ namespace Travelers
             MapWidth = w;
             MapHeight = h;
             fields = new PaintedTile[w, h];
+            diag = new double[w, h];
         }
 
         public void Dimensions(int x, int y, int w, int h)
@@ -228,7 +230,7 @@ namespace Travelers
                     var origin = new Vector2(tex.texture.Width / 2, tex.texture.Height / 2);
                     spriteBatch.Draw(tex.texture, XY(i, j), null, tex.color, 0, origin, scale, SpriteEffects.None, 0);
 
-                    spriteBatch.DrawString(font, $"{tex.symbol}", XY(i, j), Color.White, 0, font.MeasureString($"{tex.symbol}") / 2, 1, SpriteEffects.None, 1);
+                    spriteBatch.DrawString(font, $"{tex.symbol}", XY(i, j) - new Vector2(0, 30), Color.White, 0, font.MeasureString($"{tex.symbol}") / 2, 1, SpriteEffects.None, 1);
                 }
 
             // draw things
@@ -236,6 +238,15 @@ namespace Travelers
             foreach(var ps in Paths)
                 foreach (var p in ps.Value)
                     p.Draw(spriteBatch);
+
+            // draw diagnostics
+
+            for (var i = 0; i < MapWidth; i++)
+                for (var j = 0; j < MapHeight; j++)
+                {
+                    var d = String.Format("{0:0.00}", diag[i, j]);
+                    spriteBatch.DrawString(font, d, XY(i, j) + new Vector2(0, 30), Color.White, 0, font.MeasureString(d) / 2, 1, SpriteEffects.None, 1);
+                }
         }
 
         public Vector2? HexAt(Vector2 tv)
