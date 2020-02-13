@@ -245,7 +245,7 @@ namespace Travelers
                 for (var j = 0; j < MapHeight; j++)
                 {
                     var d = String.Format("{0:0.00}", diag[i, j]);
-                    spriteBatch.DrawString(font, d, XY(i, j) + new Vector2(0, 30), Color.White, 0, font.MeasureString(d) / 2, 1, SpriteEffects.None, 1);
+//                    spriteBatch.DrawString(font, d, XY(i, j) + new Vector2(0, 30), Color.White, 0, font.MeasureString(d) / 2, 1, SpriteEffects.None, 1);
                 }
         }
 

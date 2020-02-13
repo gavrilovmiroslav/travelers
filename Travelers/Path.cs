@@ -49,7 +49,6 @@ namespace Travelers
             }
         }
 
-
         public KeyValuePair<Compass, Texture2D> GetRandom(Compass? fromn)
         {
             Compass from = Compass.C;
