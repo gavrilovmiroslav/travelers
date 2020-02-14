@@ -18,7 +18,7 @@ namespace Travelers
 
     public static class Creator
     {
-        private static string[] Names =
+        private static readonly string[] TownNames =
         {
             "Elfacre",
             "Brightmill",
@@ -31,7 +31,7 @@ namespace Travelers
             "Eribourne",
             "Bridgebeach",
             "Roselyn",
-            "Summerwinter",
+            "Sumwinter",
             "Fairviolet",
             "Ashvale",
             "Dordale",
@@ -48,6 +48,9 @@ namespace Travelers
             "Strongbush",
             "Freyholt",
             "Oldtown",
+            "Torenvale",
+            "Poistrike",
+            "Hitherton",
         };
 
         private static Random rng = new Random();
@@ -225,165 +228,19 @@ namespace Travelers
                 map.TownFields = tmpMap;
             }
 
+            TownNames.Shuffle();
+
             foreach (var p in map.TownFields)
             {
                 var index = p.Key - 65;
-            }
+                HexMap m = map;
+                var c = p.Value.FindAll(t => m[t].biome == "city");
+                var realCenter = c.Count > 0 ? c[0] : rng.FromArray(p.Value);
 
-            // rivers
+                Vector2 cent = p.Value.Aggregate(Vector2.Zero, (acc, x) => acc + m.XY(x));
+                cent /= p.Value.Count;
 
-            var start = map.GetAllNot("water");
-
-            Dictionary<Vector2, bool> usedRiver = new Dictionary<Vector2, bool>();
-
-            map.Paths["rivers"] = new List<Path>();
-            var howWet = 4;
-            while (map.Paths["rivers"].Count < howWet)
-            { 
-                Path river = new Path(map.PathClasses["rivers"], map);
-
-                var m = start[rng.Next(0, start.Count)];
-
-                usedRiver[m] = true;
-
-                Compass? c = Compass.C;
-                howWet--;
-                int attempt = 0;
-                while(attempt < 10)
-                {
-                    attempt++;
-                    KeyValuePair<Compass, Texture2D> to;
-                    do
-                    {
-                        to = map.PathClasses["rivers"].GetRandom(c);
-                    } while (to.Key == c);
-
-                    river.Add(m, to.Value);
-                    var n = to.Key.Of(m);
-
-                    if (usedRiver.ContainsKey(n)) continue;
-
-                    if (to.Key == Compass.C)
-                        if (rng.Next(0, 50) < 25)
-                            continue;
-                        else break;
-
-                    if (n.X >= map.MapWidth || n.Y >= map.MapHeight || n.X < 0 || n.Y < 0)
-                        break;
-
-                    if (map[n].biome == "water" || map[n].biome == "ocean" || map[n].biome == "town" || map[n].biome == "city")
-                        break;
-
-                    if (map[n].biome == "_" || map[n].biome == null)
-                        break;
-
-                    if (m == n)
-                        break;
-
-                    c = to.Key;
-                    usedRiver[n] = true;
-                    m = n;
-                }
-
-//                if (river.pieces.Count > 4)
-                    //map.AddPath("rivers", river);
-            }
-
-            // roads
-
-            for (int z = 0; z < 3; z++)
-            {
-                const double max = 10000;
-                {
-                    var towns = map.TownFields.Keys.ToArray();
-                    char starting = rng.FromArray(towns);
-                    char ending;
-                    do
-                    {
-                        ending = rng.FromArray(towns);
-                    } while (starting == ending);
-
-                    var xys = rng.FromArray(map.TownFields[starting]);
-                    var xyd = rng.FromArray(map.TownFields[ending]);
-
-                    //                map[xys].color = Color.Red;
-                    //                map[xyd].color = Color.Green;
-
-                    Dictionary<Vector2, double> optDist = new Dictionary<Vector2, double>();
-                    Queue<Vector2> opts = new Queue<Vector2>();
-                    opts.Enqueue(xys);
-
-                    while (opts.Count > 0)
-                    {
-                        var o = opts.Dequeue();
-                        var bo = map[o].biome;
-
-                        if (optDist.ContainsKey(o)) continue;
-
-                        optDist[o] = HexMap.Distance(o, xyd);
-                        if (bo == null || bo == "_" || bo == "water" || bo == "ocean")
-                            optDist[o] = max;
-                        else if (bo == "moors" || bo == "mountains")
-                            optDist[o] *= 2;
-                        else if (bo == "hills" || bo == "forest" || bo == "city")
-                            optDist[o] *= 1.15;
-
-                        foreach (var n in map.Neighbors(o))
-                        {
-                            var b = map[n].biome;
-                            if (b != null && b != "_" && b != "water" && b != "ocean")
-                                opts.Enqueue(n);
-                        }
-
-                        if (optDist.ContainsKey(xyd)) break;
-                    }
-
-                    for (int i = 0; i < map.MapWidth; i++)
-                        for (int j = 0; j < map.MapHeight; j++)
-                        {
-                            var no = new Vector2(i, j);
-                            if (optDist.ContainsKey(no)) map.diag[i, j] = optDist[no];
-                            else map.diag[i, j] = max;
-                        }
-
-                    var path = new Path(map.PathClasses["paths"], map);
-                    var current = xys;
-                    var dir = Compass.C;
-
-                    while (current != xyd)
-                    {
-                        double min = max;
-
-                        var cand = current;
-                        foreach (var nx in map.Neighbors(current))
-                        {
-                            if (!optDist.ContainsKey(nx))
-                                optDist[nx] = 1000;
-
-                            var onx = optDist[nx];
-                            if (onx < min)
-                            {
-                                cand = nx;
-                                min = onx;
-                                optDist[nx] *= 2;
-                            }
-                        }
-
-                        if (cand == current) break;
-
-                        //                    map[cand].color = Color.Purple;
-                        var fromto = current.Direction(cand);
-
-                        if (dir == fromto) break;
-                        path.Add(current, rng.FromArray(map.PathClasses["paths"].PathPieces[dir][fromto]));
-
-                        dir = fromto.Inverse();
-                        current = cand;
-                    }
-
-                    path.Add(current, rng.FromArray(map.PathClasses["paths"].PathPieces[dir][Compass.C]));
-                    map.AddPath("paths", path);
-                }
+                map.TownTitles[cent] = new KeyValuePair<Vector2, string>(realCenter, TownNames[index]);
             }
         }
     }

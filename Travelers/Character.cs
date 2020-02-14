@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+﻿using Microsoft.Xna.Framework.Content;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,12 @@ namespace Travelers
 {
     public class Character
     {
-        public Character(HexMap map) { }
+        public ContentManager Content;
+
+        public Character(ContentManager c)
+        {
+            Content = c;
+        }
 
         public void Update() { }
 

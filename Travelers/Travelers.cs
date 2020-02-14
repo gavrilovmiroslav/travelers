@@ -107,54 +107,18 @@ namespace Travelers
             map.Add("moor_sparse_covered", "moors", "tile_moor_sparse_covered_blue_", 0, 9);
             map.Add("moor_dense_clear", "moors", "tile_moor_dense_clear_blue_", 0, 9);
 
-            var rivers = new PathClass(Content) { FamilyName = "rivers" };
-            rivers.Add(Compass.C, Compass.E, "overlay_river", 2);
-            rivers.Add(Compass.C, Compass.W, "overlay_river", 2);
-            rivers.Add(Compass.C, Compass.NE, "overlay_river", 3);
-            rivers.Add(Compass.C, Compass.NW, "overlay_river", 3);
-            rivers.Add(Compass.C, Compass.SE, "overlay_river", 3);
-            rivers.Add(Compass.C, Compass.SW, "overlay_river", 3);
-            rivers.Add(Compass.E, Compass.SE, "overlay_river", 2);
-            rivers.Add(Compass.E, Compass.SW, "overlay_river", 2);
-            rivers.Add(Compass.E, Compass.W, "overlay_river", 3);
-            rivers.Add(Compass.NE, Compass.E, "overlay_river", 3);
-            rivers.Add(Compass.NE, Compass.SE, "overlay_river", 3);
-            rivers.Add(Compass.NE, Compass.SW, "overlay_river", 3);
-            rivers.Add(Compass.NE, Compass.W, "overlay_river", 3);
-            rivers.Add(Compass.NW, Compass.E, "overlay_river", 3);
-            rivers.Add(Compass.NW, Compass.NE, "overlay_river", 2);
-            rivers.Add(Compass.NW, Compass.SE, "overlay_river", 3);
-            rivers.Add(Compass.NW, Compass.SW, "overlay_river", 3);
-            rivers.Add(Compass.NW, Compass.W, "overlay_river", 3);
-            rivers.Add(Compass.SE, Compass.SW, "overlay_river", 2);
-            rivers.Add(Compass.SE, Compass.W, "overlay_river", 2);
-            rivers.Add(Compass.SW, Compass.W, "overlay_river", 2);
-            map.AddPathClass("rivers", rivers);
+            map.AddLocations("overlay_location_framed_uncut_standard", "battlefield", "bridge", "camp", "campfire", "castle", "cave", "church", "city", "city_house", "dungeon",
+                "farm", "graveyard", "house", "inn", "lighthouse", "military", "mine", "nest", "outpost", "quarry", "ruin", "sanctuary", "ship", "shipwreck", "spring", "tent",
+                "tower", "village", "windmill", "witch_hut");
 
-            var paths = new PathClass(Content) { FamilyName = "paths" };
-            paths.Add(Compass.C, Compass.E, "overlay_path", 2);
-            paths.Add(Compass.C, Compass.W, "overlay_path", 2);
-            paths.Add(Compass.C, Compass.NE, "overlay_path", 3);
-            paths.Add(Compass.C, Compass.NW, "overlay_path", 3);
-            paths.Add(Compass.C, Compass.SE, "overlay_path", 3);
-            paths.Add(Compass.C, Compass.SW, "overlay_path", 3);
-            paths.Add(Compass.E, Compass.SE, "overlay_path", 2);
-            paths.Add(Compass.E, Compass.SW, "overlay_path", 2);
-            paths.Add(Compass.E, Compass.W, "overlay_path", 3);
-            paths.Add(Compass.NE, Compass.E, "overlay_path", 3);
-            paths.Add(Compass.NE, Compass.SE, "overlay_path", 3);
-            paths.Add(Compass.NE, Compass.SW, "overlay_path", 3);
-            paths.Add(Compass.NE, Compass.W, "overlay_path", 3);
-            paths.Add(Compass.NW, Compass.E, "overlay_path", 3);
-            paths.Add(Compass.NW, Compass.NE, "overlay_path", 2);
-            paths.Add(Compass.NW, Compass.SE, "overlay_path", 3);
-            paths.Add(Compass.NW, Compass.SW, "overlay_path", 3);
-            paths.Add(Compass.NW, Compass.W, "overlay_path", 3);
-            paths.Add(Compass.SE, Compass.SW, "overlay_path", 2);
-            paths.Add(Compass.SE, Compass.W, "overlay_path", 2);
-            paths.Add(Compass.SW, Compass.W, "overlay_path", 2);
-            map.AddPathClass("paths", paths);
+            map.AddCharacters("strategy_figure_180x180_framed_standard", "adventurer", "adventurer_with_horse", "archer", "armored_horse", "balloon", "bandit", "bandits", "barbarian",
+                "bat", "bear", "boar", "bull", "carriage", "cart", "cat", "chicken", "cow", "crow", "cyclops", "dog", "donkey", "dragon", "druid", "elder", "farmer", "fen_fire", "frog",
+                "ghost", "goblin", "goblins", "hero", "hero_with_horse", "horse", "knight", "knight_with_horse", "kraken", "livestock", "mage", "miner", "mummy", "orc", "orcs", "paladin",
+                "paladin_with_horse", "party", "people", "pig", "pikeman", "priest", "rabbit", "rat", "rogue", "saddled_donkey", "saddled_horse", "sheep", "skeleton", "skeleton_archer",
+                "skeleton_warrior", "skeletons", "slime", "snake", "soldiers", "spider", "stag", "trader", "trader_with_donkey", "trader_with_wagon", "troll", "turkey", "villager", "wagon",
+                "warrior", "werewolf", "witch", "wolf", "worker", "workers", "yeti", "zombie", "zombies");
 
+            map.player = new Character(Content);
             map.Load(Content);
 
             Creator.Island(ref map);

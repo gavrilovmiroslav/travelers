@@ -65,9 +65,16 @@ namespace Travelers
         public List<Vector2> Towns = new List<Vector2>();
         public Dictionary<char, List<Vector2>> TownFields = new Dictionary<char, List<Vector2>>();
         public Dictionary<string, Dictionary<string, int>> BiomeTies = new Dictionary<string, Dictionary<string, int>>();
-        public Dictionary<string, PathClass> PathClasses = new Dictionary<string, PathClass>();
-        public Dictionary<string, List<Path>> Paths = new Dictionary<string, List<Path>>();
-        
+        public Dictionary<Vector2, KeyValuePair<Vector2, string>> TownTitles = new Dictionary<Vector2, KeyValuePair<Vector2, string>>();
+        public Dictionary<string, Texture2D> Places = new Dictionary<string, Texture2D>();
+        public Dictionary<string, Texture2D> Chars = new Dictionary<string, Texture2D>();
+
+        private Dictionary<string, string> PlacePaths = new Dictionary<string, string>();
+        private Dictionary<string, string> CharPaths = new Dictionary<string, string>();
+
+        private long time;
+        public Character player;
+
         public void TieBiomes(string b1, string b2, int prob)
         {
             if (!BiomeTies.ContainsKey(b1))
@@ -110,6 +117,8 @@ namespace Travelers
             TileHeight = h;
         }
 
+        public Vector2 XY(Vector2 ij) => XY((int)ij.X, (int)ij.Y);
+
         public Vector2 XY(int i, int j) => new Vector2(j % 2 * TileX + i * TileWidth, TileY + j * TileHeight);
 
         public PaintedTile this[Vector2 v]
@@ -148,19 +157,6 @@ namespace Travelers
             this.Region.AddRange(biomes);            
         }
 
-        public void AddPathClass(string pathName, PathClass path)
-        {
-            this.PathClasses.Add(pathName, path);
-        }
-
-        public void AddPath(string pathName, Path path)
-        {
-            if (!this.Paths.ContainsKey(pathName))
-                this.Paths[pathName] = new List<Path>();
-
-            this.Paths[pathName].Add(path);
-        }
-
         public void Load(ContentManager Content)
         {
             Random r = new Random();
@@ -184,69 +180,111 @@ namespace Travelers
             }
 
             textures = biomes;
+
+            foreach(var name in PlacePaths.Keys)
+            {
+                Places[name] = Content.Load<Texture2D>(PlacePaths[name]);
+            }
+
+            foreach (var name in CharPaths.Keys)
+            {
+                Chars[name] = Content.Load<Texture2D>(CharPaths[name]);
+            }
+        }
+
+        public void AddCharacters(string prefix, params string[] names)
+        {
+            foreach (var name in names)
+            {
+                CharPaths[name] = $"{prefix}_{name}";
+            }
+        }
+
+        public void AddLocations(string prefix, params string[] names)
+        {
+            foreach(var name in names)
+            {
+                PlacePaths[name] = $"{prefix}_{name}";
+            }
         }
 
         public void Draw(SpriteBatch spriteBatch, SpriteFont font)
         {
-            // draw map
-            for (int i = 0; i < MapWidth; i++)
-                for (int j = 0; j < MapHeight; j++)
-                {
-                    PaintedTile tex = fields[i, j];
-                    if (fields[i, j] == null) tex = textures["_"][0];
+            time++;
 
-                    if (tex.timer >= tex.tick)
+            { 
+                // draw map
+                for (int i = 0; i < MapWidth; i++)
+                    for (int j = 0; j < MapHeight; j++)
                     {
-                        tex.timer = 0;
-                    }
+                        PaintedTile tex = fields[i, j];
+                        if (fields[i, j] == null) tex = textures["_"][0];
 
-                    var scale = Vector2.One;
-
-                    var dt = 0.0f;
-                    var st = 0.0f;
-
-                    if (tex.biome == "water")
-                    {
-                        dt = 1f; st = 0.03f;
-
-                        if (tex.timer == 1)
+                        if (tex.timer >= tex.tick)
                         {
-                            Put(i, j, tex.biome);
+                            tex.timer = 0;
                         }
+
+                        var scale = Vector2.One;
+
+                        var dt = 0.0f;
+                        var st = 0.0f;
+
+                        if (tex.biome == "water")
+                        {
+                            dt = 1f; st = 0.03f;
+
+                            if (tex.timer == 1)
+                            {
+                                Put(i, j, tex.biome);
+                            }
+                        }
+                        else if (tex.biome == "moors")
+                        {
+                            dt = 0.33f; st = 0.05f;
+                        }
+                        else if (tex.biome == "forest")
+                        {
+                            dt = 0.33f; st = 0.02f;
+                        }
+
+                        tex.timer += dt;
+                        float s = 1.0f + (float)Math.Sin(tex.timer * Math.PI / 180.0f) * st;
+                        scale *= s;
+
+                        var origin = new Vector2(tex.texture.Width / 2, tex.texture.Height / 2);
+                        spriteBatch.Draw(tex.texture, XY(i, j), null, tex.color, 0, origin, scale, SpriteEffects.None, 0);
                     }
-                    else if (tex.biome == "moors")
-                    {
-                        dt = 0.33f; st = 0.05f;
-                    }
-                    else if (tex.biome == "forest")
-                    {
-                        dt = 0.33f; st = 0.02f;
-                    }
+            }
+            // draw town titles
 
-                    tex.timer += dt;
-                    float s = 1.0f + (float)Math.Sin(tex.timer * Math.PI / 180.0f) * st;
-                    scale *= s;
+            foreach (var town in TownTitles)
+            {
+                var d = town.Key;
+                var s = town.Value;
+                var tex = this[town.Value.Key];
 
-                    var origin = new Vector2(tex.texture.Width / 2, tex.texture.Height / 2);
-                    spriteBatch.Draw(tex.texture, XY(i, j), null, tex.color, 0, origin, scale, SpriteEffects.None, 0);
+                tex.timer += 0.1f;
 
-                    spriteBatch.DrawString(font, $"{tex.symbol}", XY(i, j) - new Vector2(0, 30), Color.White, 0, font.MeasureString($"{tex.symbol}") / 2, 1, SpriteEffects.None, 1);
-                }
-
-            // draw things
-
-            foreach(var ps in Paths)
-                foreach (var p in ps.Value)
-                    p.Draw(spriteBatch);
-
-            // draw diagnostics
-
-            for (var i = 0; i < MapWidth; i++)
-                for (var j = 0; j < MapHeight; j++)
+                if (tex.timer >= tex.tick)
                 {
-                    var d = String.Format("{0:0.00}", diag[i, j]);
-//                    spriteBatch.DrawString(font, d, XY(i, j) + new Vector2(0, 30), Color.White, 0, font.MeasureString(d) / 2, 1, SpriteEffects.None, 1);
+                    tex.timer = 0;
                 }
+
+                var size = TownFields[tex.symbol].Count;
+                var scale = 1.0f + (0.12f * size) + (float)Math.Sin(tex.timer * Math.PI / 180.0f) * 0.1f;
+
+                for (int i = -2; i < 3; i++)
+                    for (int j = -2; j < 3; j++)
+                        spriteBatch.DrawString(font, s.Value, d - new Vector2(i, 30 + j), new Color(105, 105, 108), 0, font.MeasureString(s.Value) / 2, scale, SpriteEffects.None, 1);
+
+                spriteBatch.DrawString(font, s.Value, d - new Vector2(0, 30), Color.White, 0, font.MeasureString(s.Value) / 2, scale, SpriteEffects.None, 1);
+            }
+
+            // draw locations
+
+            // draw characters
+
         }
 
         public Vector2? HexAt(Vector2 tv)
